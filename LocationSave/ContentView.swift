@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import MapKit
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private var locationManager = CLLocationManager()
@@ -24,12 +25,35 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
+struct MapView: UIViewRepresentable {
+    var coordinate: CLLocationCoordinate2D
+
+    func makeUIView(context: Context) -> MKMapView {
+        MKMapView(frame: .zero)
+    }
+
+    func updateUIView(_ view: MKMapView, context: Context) {
+        let span = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+        let region = MKCoordinateRegion(center: coordinate, span: span)
+        view.setRegion(region, animated: true)
+
+        // 現在地を示すピンを地図に追加
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = coordinate
+        view.addAnnotation(annotation)
+    }
+}
+
+
 struct ContentView: View {
     @ObservedObject var locationManager = LocationManager()
 
     var body: some View {
         VStack {
             if let location = locationManager.lastLocation {
+                MapView(coordinate: location.coordinate)
+                    .edgesIgnoringSafeArea(.all)
+
                 Text("Current location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             } else {
                 Text("Fetching location...")
